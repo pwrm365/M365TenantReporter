@@ -29,7 +29,13 @@ function Start-M365TRDocumentation {
     try {
         $exoArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-Exchange.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $exoJsonPath)
         if ($context.TenantId) { $exoArgs += @('-TenantId', $context.TenantId) }
-        & pwsh @exoArgs 2>&1 | Out-Null
+        # Bez przekierowania - komunikaty procesu (np. dlaczego polaczenie z Exchange Online się
+        # nie powiodlo) mają być widoczne, nie ukryte. Wczesniej `2>&1 | Out-Null` je wyciszal,
+        # a plik wynikowy jest tworzony (pusty) jeszcze PRZED próba polaczenia, więc samo
+        # Test-Path nigdy nie wykrywalo nieudanego polaczenia - stąd sekcje Exchange/Purview
+        # (21 z 64) mogly cicho zniknąc z raportu bez zadnego ostrzezenia.
+        & pwsh @exoArgs
+        $exoResults = @()
         if (Test-Path -LiteralPath $exoJsonPath) {
             # Collect-Exchange.ps1 zapisuje wyniki linia-po-linii (JSON Lines), nie jako jedna
             # duza tablica - to środowisko ma powtarzalna, niewyjasniona niestabilność po
@@ -47,11 +53,11 @@ function Start-M365TRDocumentation {
                     Write-Warning "Nie udało się odczytać jednej linii wyniku Exchange/Purview: $($_.Exception.Message)"
                 }
             }
-            if (@($exoResults).Count -gt 0) {
-                $results = @($results) + @($exoResults)
-            }
+        }
+        if (@($exoResults).Count -gt 0) {
+            $results = @($results) + @($exoResults)
         } else {
-            Write-Warning 'Zbieranie Exchange/Purview nie wygenerowalo wyniku - sekcje te zostaną pominięte w raporcie.'
+            Write-Warning 'Zbieranie Exchange/Purview nie zwróciło żadnej sekcji - najpewniej nie udało się połączyć (patrz komunikaty procesu powyżej: brak modułu/certyfikatu/konfiguracji). Sekcje Exchange/Purview zostaną pominięte w raporcie.'
         }
     } finally {
         Remove-Item -LiteralPath $exoJsonPath -ErrorAction SilentlyContinue
@@ -65,7 +71,8 @@ function Start-M365TRDocumentation {
     try {
         $teamsArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-Teams.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $teamsJsonPath)
         if ($context.TenantId) { $teamsArgs += @('-TenantId', $context.TenantId) }
-        & pwsh @teamsArgs 2>&1 | Out-Null
+        & pwsh @teamsArgs
+        $teamsResults = @()
         if (Test-Path -LiteralPath $teamsJsonPath) {
             $teamsLines = Get-Content -LiteralPath $teamsJsonPath | Where-Object { $_ -and $_.Trim() }
             $teamsResults = foreach ($line in $teamsLines) {
@@ -78,11 +85,11 @@ function Start-M365TRDocumentation {
                     Write-Warning "Nie udało się odczytać jednej linii wyniku Teams: $($_.Exception.Message)"
                 }
             }
-            if (@($teamsResults).Count -gt 0) {
-                $results = @($results) + @($teamsResults)
-            }
+        }
+        if (@($teamsResults).Count -gt 0) {
+            $results = @($results) + @($teamsResults)
         } else {
-            Write-Warning 'Zbieranie Teams nie wygenerowało wyniku - sekcje te zostaną pominięte w raporcie.'
+            Write-Warning 'Zbieranie Teams nie zwróciło żadnej sekcji - najpewniej nie udało się połączyć (patrz komunikaty procesu powyżej: brak modułu/certyfikatu/konfiguracji). Sekcje Teams zostaną pominięte w raporcie.'
         }
     } finally {
         Remove-Item -LiteralPath $teamsJsonPath -ErrorAction SilentlyContinue
