@@ -45,13 +45,24 @@ function Install-M365TRPrerequisites {
     foreach ($module in $missing) {
         $label = if ($module.RequiredVersion) { "$($module.Name) $($module.RequiredVersion)" } else { $module.Name }
         Write-Host "Moduł $label nie jest zainstalowany - instaluję dla bieżącego użytkownika..."
+        $installFailed = $false
         try {
             $installArgs = @{ Name = $module.Name; Scope = 'CurrentUser'; Force = $true; AllowClobber = $true; ErrorAction = 'Stop' }
             if ($module.RequiredVersion) { $installArgs.RequiredVersion = $module.RequiredVersion }
             Install-Module @installArgs
             Write-Host "Zainstalowano moduł $label."
         } catch {
+            $installFailed = $true
             Write-Warning "Nie udało się automatycznie zainstalować modułu ${label}: $($_.Exception.Message). Zainstaluj go ręcznie (Install-Module $($module.Name)$(if ($module.RequiredVersion) { " -RequiredVersion $($module.RequiredVersion)" }) -Scope CurrentUser) i uruchom ponownie."
+        }
+
+        # MSAL.PS jest jedynym modułem, bez którego dosłownie nic się nie da zrobić (logowanie do
+        # Microsoft Graph) - w przeciwieństwie do ExchangeOnlineManagement/MicrosoftTeams, które
+        # mają już gdzie indziej (Connect-M365TRExchange/Teams) łagodne pomijanie sekcji, jego brak
+        # przerywamy jawnym błędem tutaj, zamiast pozwolić skryptowi wywalić się kilka linii dalej
+        # na nieznanym poleceniu Get-MsalToken z niejasnym komunikatem.
+        if ($module.Name -eq 'MSAL.PS' -and $installFailed) {
+            throw "Modul MSAL.PS jest wymagany do logowania do Microsoft Graph, a automatyczna instalacja nie powiodła się. Zainstaluj recznie: Install-Module MSAL.PS -Scope CurrentUser"
         }
     }
 }
