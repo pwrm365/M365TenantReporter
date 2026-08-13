@@ -1,0 +1,22 @@
+# Poswiadczenia i sekrety per-tenant - certyfikaty, klucze aplikacji, indeks tenantow.
+# Nigdy nie commitowac - kazdy plik tutaj daje dostep administracyjny do realnego tenanta klienta.
+.credentials/
+
+# Cache pobieranych danych (lista nazw licencji Microsoft) - regenerowalny, nie ma potrzeby wersjonowac.
+.cache/
+
+# Wygenerowane raporty - zawieraja realne dane konfiguracyjne klienta (nazwy, domeny, admini, wyniki
+# bezpieczenstwa). Nigdy nie commitowac.
+Output/
+*.html
+*.pdf
+!Report/Templates/report-template.html
+
+# Skrypty diagnostyczne tworzone ad-hoc podczas debugowania - nigdy nie powinny trafic do repo.
+Test-*.ps1
+!Test-Smoke.ps1
+
+# PowerShell / Windows
+*.ps1xml.bak
+Thumbs.db
+desktop.ini

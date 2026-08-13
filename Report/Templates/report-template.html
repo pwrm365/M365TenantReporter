@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{DOC_TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+{{STYLES}}
+</style>
+</head>
+<body>
+  <header class="cover">
+    <div class="cover-mark">
+      {{COVER_MARK}}
+      <span>Dokumentacja techniczna</span>
+    </div>
+
+    <div class="cover-eyebrow">{{COVER_EYEBROW}}</div>
+    <h1>{{TENANT_NAME}}</h1>
+    <p class="cover-sub">{{COVER_SUBTITLE}}</p>
+
+    <dl class="cover-facts">
+{{COVER_FACTS}}
+    </dl>
+
+    <p class="cover-note">{{COVER_NOTE}}</p>
+  </header>
+
+  <section class="dashboard">
+    <h2>Podsumowanie</h2>
+{{DASHBOARD}}
+  </section>
+
+  <nav class="toc-wrap">
+    <h2>Spis treści</h2>
+{{TOC}}
+  </nav>
+
+  <main>
+{{CHAPTERS}}
+  </main>
+
+  <footer class="report-footer">
+    <span>{{FOOTER_LEFT}}</span>
+    <span>{{FOOTER_RIGHT}}</span>
+  </footer>
+</body>
+</html>
