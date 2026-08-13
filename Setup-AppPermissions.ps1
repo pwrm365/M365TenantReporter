@@ -19,6 +19,8 @@ param(
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'M365TenantReporter.psd1') -Force
 
+Install-M365TRPrerequisites
+
 # Klient "Microsoft Graph PowerShell" - jedyny powszechnie dostępny pierwszo-stronny klient
 # Microsoftu, który deklaruje Application.ReadWrite.All / AppRoleAssignment.ReadWrite.All.
 # Klient używany na co dzień do zbierania danych (Microsoft Intune PowerShell) tego NIE

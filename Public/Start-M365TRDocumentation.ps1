@@ -15,6 +15,8 @@ function Start-M365TRDocumentation {
 
     $moduleRoot = Split-Path -Parent $PSScriptRoot
 
+    Install-M365TRPrerequisites
+
     $context = Connect-M365TR -TenantId $TenantId -Interactive:$Interactive -NonInteractive:$NonInteractive
     $results = Invoke-M365TRCollection -Context $context -ModuleRoot $moduleRoot
 

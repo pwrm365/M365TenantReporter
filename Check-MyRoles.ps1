@@ -1,6 +1,8 @@
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'M365TenantReporter.psd1') -Force
 
+Install-M365TRPrerequisites
+
 $context = Connect-M365TR
 $module = Get-Module M365TenantReporter
 $r = & $module { param($ctx, $path) Invoke-M365TRGraphRequest -Context $ctx -Path $path } $context '/me/transitiveMemberOf/microsoft.graph.directoryRole'
