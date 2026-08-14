@@ -6,7 +6,7 @@ function Start-M365TRDocumentation {
     #>
     [CmdletBinding()]
     param(
-        [string]$OutputDirectory = 'C:\data\M365TenantReporter\Output',
+        [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'Output'),
         [string]$TenantId,
         [switch]$Interactive,
         [switch]$NonInteractive,

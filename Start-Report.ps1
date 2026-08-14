@@ -1,7 +1,7 @@
 #requires -Version 7.0
 [CmdletBinding()]
 param(
-    [string]$OutputDirectory = 'C:\data\M365TenantReporter\Output',
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot 'Output'),
     [string]$TenantId,
     [switch]$Interactive,
     [switch]$NonInteractive,
