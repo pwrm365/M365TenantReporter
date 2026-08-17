@@ -9,7 +9,8 @@ function New-M365TRReportModel {
     param(
         [Parameter(Mandatory)][object[]]$Results,
         [Parameter(Mandatory)][string]$TenantName,
-        [string]$LogoDataUri = $null
+        [string]$LogoDataUri = $null,
+        [ValidateSet('pl', 'en')][string]$Language = 'pl'
     )
 
     $componentOrder = @('EntraID', 'Intune', 'Windows365', 'CloudPrint', 'InformationProtection', 'Exchange', 'Teams', 'SharePoint', 'Purview')
@@ -52,7 +53,7 @@ function New-M365TRReportModel {
         }
         $leftover = @($sections | Where-Object { -not $matchedNames.ContainsKey($_.Section) })
         if ($leftover.Count -gt 0) {
-            $leftoverName = if ($groups.Count -gt 0) { 'Pozostałe ustawienia' } else { $null }
+            $leftoverName = if ($groups.Count -gt 0) { ConvertTo-M365TRLocalizedText -Text 'Pozostałe ustawienia' -Language $Language } else { $null }
             $groups = @($groups) + [PSCustomObject]@{ Name = $leftoverName; Sections = @($leftover | Sort-Object Section) }
         }
 
@@ -82,5 +83,6 @@ function New-M365TRReportModel {
         Chapters      = @($chapters)
         Health        = $health
         Appendix      = $appendix
+        Language      = $Language
     }
 }

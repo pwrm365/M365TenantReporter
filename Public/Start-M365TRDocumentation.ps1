@@ -8,6 +8,7 @@ function Start-M365TRDocumentation {
     param(
         [string]$OutputDirectory = (Join-Path (Split-Path -Parent $PSScriptRoot) 'Output'),
         [string]$TenantId,
+        [ValidateSet('pl', 'en')][string]$Language,
         [switch]$Interactive,
         [switch]$NonInteractive,
         [switch]$SkipPdf
@@ -15,9 +16,27 @@ function Start-M365TRDocumentation {
 
     $moduleRoot = Split-Path -Parent $PSScriptRoot
 
+    # Brak jawnie podanego -Language: pytamy interaktywnie (tak jak Connect-M365TR pyta o
+    # tenanta), chyba że to przebieg nienadzorowany (-NonInteractive) - wtedy domyślnie polski,
+    # zeby zaplanowane/automatyczne uruchomienia nigdy nie utknely czekajac na Read-Host.
+    if (-not $Language) {
+        if ($NonInteractive) {
+            $Language = 'pl'
+        } else {
+            Write-Host ''
+            Write-Host 'W jakim języku przygotować dokumentację? / In which language should the documentation be prepared?'
+            Write-Host '  1) Polski'
+            Write-Host '  2) English'
+            $choice = $null
+            try { $choice = Read-Host 'Wybierz numer / choose a number [1]' } catch { $choice = $null }
+            $Language = if ("$choice".Trim() -eq '2') { 'en' } else { 'pl' }
+        }
+    }
+
     Install-M365TRPrerequisites
 
     $context = Connect-M365TR -TenantId $TenantId -Interactive:$Interactive -NonInteractive:$NonInteractive
+    $context | Add-Member -MemberType NoteProperty -Name Language -Value $Language -Force
     $results = Invoke-M365TRCollection -Context $context -ModuleRoot $moduleRoot
 
     # Exchange/Purview: osobny proces (patrz komentarz w Invoke-M365TRCollection.ps1) - zbiera
@@ -27,7 +46,7 @@ function Start-M365TRDocumentation {
     Write-Host 'Uruchamianie zbierania danych Exchange/Purview (osobny proces)...'
     $exoJsonPath = Join-Path ([System.IO.Path]::GetTempPath()) "m365tr-exo-$([guid]::NewGuid()).json"
     try {
-        $exoArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-Exchange.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $exoJsonPath)
+        $exoArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-Exchange.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $exoJsonPath, '-Language', $Language)
         if ($context.TenantId) { $exoArgs += @('-TenantId', $context.TenantId) }
         # Bez przekierowania - komunikaty procesu (np. dlaczego polaczenie z Exchange Online się
         # nie powiodlo) mają być widoczne, nie ukryte. Wczesniej `2>&1 | Out-Null` je wyciszal,
@@ -69,7 +88,7 @@ function Start-M365TRDocumentation {
     Write-Host 'Uruchamianie zbierania danych Teams (osobny proces)...'
     $teamsJsonPath = Join-Path ([System.IO.Path]::GetTempPath()) "m365tr-teams-$([guid]::NewGuid()).json"
     try {
-        $teamsArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-Teams.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $teamsJsonPath)
+        $teamsArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-Teams.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $teamsJsonPath, '-Language', $Language)
         if ($context.TenantId) { $teamsArgs += @('-TenantId', $context.TenantId) }
         & pwsh @teamsArgs
         $teamsResults = @()
@@ -103,7 +122,7 @@ function Start-M365TRDocumentation {
     Write-Host 'Pobieranie logo organizacji (Company Branding)...'
     $logoDataUri = Get-M365TRBrandingLogo -Context $context
 
-    $model = New-M365TRReportModel -Results $results -TenantName $tenantName -LogoDataUri $logoDataUri
+    $model = New-M365TRReportModel -Results $results -TenantName $tenantName -LogoDataUri $logoDataUri -Language $Language
 
     if (-not (Test-Path -LiteralPath $OutputDirectory)) { New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null }
     $stamp = Get-Date -Format 'yyyyMMdd_HHmm'

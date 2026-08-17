@@ -1,5 +1,5 @@
 function Get-M365TRRetentionCompliancePolicySummary {
-    param($Policy)
+    param($Policy, [ValidateSet('pl', 'en')][string]$Language = 'pl')
     $parts = New-Object System.Collections.Generic.List[string]
 
     $scopeProps = 'Workload', 'ExchangeLocation', 'SharePointLocation', 'Locations', 'OneDriveLocation', 'ModernGroupLocation'
@@ -11,16 +11,22 @@ function Get-M365TRRetentionCompliancePolicySummary {
             if ($joined) { $scopes.Add($joined) }
         }
     }
-    if ($scopes.Count -gt 0) { $parts.Add("zakres: $(($scopes | Select-Object -Unique) -join ', ')") }
 
-    if ($Policy.Mode) { $parts.Add("tryb: $($Policy.Mode)") }
-
-    if ($parts.Count -eq 0) { return '(brak kluczowych ustawien do podsumowania)' }
+    if ($Language -eq 'en') {
+        if ($scopes.Count -gt 0) { $parts.Add("scope: $(($scopes | Select-Object -Unique) -join ', ')") }
+        if ($Policy.Mode) { $parts.Add("mode: $($Policy.Mode)") }
+        if ($parts.Count -eq 0) { return '(no key settings to summarize)' }
+    } else {
+        if ($scopes.Count -gt 0) { $parts.Add("zakres: $(($scopes | Select-Object -Unique) -join ', ')") }
+        if ($Policy.Mode) { $parts.Add("tryb: $($Policy.Mode)") }
+        if ($parts.Count -eq 0) { return '(brak kluczowych ustawien do podsumowania)' }
+    }
     return ($parts -join '; ')
 }
 
 function Get-Collector_Purview_RetentionCompliancePolicies {
     param([Parameter(Mandatory)]$Context)
+    $lang = Get-M365TRLanguage -Context $Context
     $r = Invoke-M365TREXOCommand -ScriptBlock { Get-RetentionCompliancePolicy }
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'Purview' -Section 'Zasady retencji' -Status $r.Status -Message $r.Message
@@ -33,7 +39,7 @@ function Get-Collector_Purview_RetentionCompliancePolicies {
         [PSCustomObject]@{
             'Nazwa'    = $_.Name
             'Włączona' = $_.Enabled
-            'Co robi'  = Get-M365TRRetentionCompliancePolicySummary -Policy $_
+            'Co robi'  = Get-M365TRRetentionCompliancePolicySummary -Policy $_ -Language $lang
         }
     }
     New-M365TRCollectorResult -Component 'Purview' -Section 'Zasady retencji' `

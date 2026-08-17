@@ -3,6 +3,7 @@
 param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot 'Output'),
     [string]$TenantId,
+    [ValidateSet('pl', 'en')][string]$Language,
     [switch]$Interactive,
     [switch]$NonInteractive,
     [switch]$SkipPdf
@@ -11,7 +12,17 @@ param(
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'M365TenantReporter.psd1') -Force
 
-$result = Start-M365TRDocumentation -OutputDirectory $OutputDirectory -TenantId $TenantId -Interactive:$Interactive -NonInteractive:$NonInteractive -SkipPdf:$SkipPdf
+# -Language nie ma tu domyslnej wartosci celowo: gdy nie podano go jawnie, Start-M365TRDocumentation
+# samo o niego zapyta (chyba ze -NonInteractive) - podanie tu "pl" na sztywno zablokowaloby to pytanie.
+$docArgs = @{
+    OutputDirectory = $OutputDirectory
+    TenantId        = $TenantId
+    Interactive     = $Interactive
+    NonInteractive  = $NonInteractive
+    SkipPdf         = $SkipPdf
+}
+if ($Language) { $docArgs.Language = $Language }
+$result = Start-M365TRDocumentation @docArgs
 
 Write-Host ''
 Write-Host "Raport HTML: $($result.HtmlPath)"

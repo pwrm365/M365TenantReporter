@@ -7,6 +7,7 @@ function Get-Collector_Intune_PlatformEnrollmentRestrictions {
     ogólnym podsumowaniu ustawien, więc ma dedykowany kolektor.
     #>
     param([Parameter(Mandatory)]$Context)
+    $lang = Get-M365TRLanguage -Context $Context
     $r = Invoke-M365TRGraphRequest -Context $Context -Path '/deviceManagement/deviceEnrollmentConfigurations'
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'Intune' -Section 'Ograniczenia rejestracji per platforma' -Status $r.Status -Message $r.Message
@@ -17,15 +18,36 @@ function Get-Collector_Intune_PlatformEnrollmentRestrictions {
             -Description 'Które platformy urządzeń mogą się rejestrować w Intune, oraz czy urządzenia prywatne (BYOD) są dopuszczone.'
     }
 
-    $platformLabels = @{
-        iosRestriction               = 'iOS/iPadOS'
-        androidRestriction           = 'Android (rejestracja standardowa)'
-        androidForWorkRestriction    = 'Android Enterprise (profil służbowy)'
-        androidDeviceOwnerRestriction = 'Android Enterprise (w pełni zarządzane)'
-        windowsRestriction           = 'Windows'
-        windowsMobileRestriction     = 'Windows Mobile'
-        windowsHomeSkuRestriction    = 'Windows Home'
-        macOSRestriction             = 'macOS'
+    if ($lang -eq 'en') {
+        $platformLabels = @{
+            iosRestriction                = 'iOS/iPadOS'
+            androidRestriction            = 'Android (standard enrollment)'
+            androidForWorkRestriction     = 'Android Enterprise (work profile)'
+            androidDeviceOwnerRestriction = 'Android Enterprise (fully managed)'
+            windowsRestriction            = 'Windows'
+            windowsMobileRestriction      = 'Windows Mobile'
+            windowsHomeSkuRestriction     = 'Windows Home'
+            macOSRestriction              = 'macOS'
+        }
+        $colZasada = 'Rule'; $colPlatforma = 'Platform'; $colRejestracja = 'Enrollment'
+        $colByod = 'Personal devices (BYOD)'; $colOsVer = 'Required OS version'
+        $blockedLabel = 'Blocked'; $allowedLabel = 'Allowed'; $notApplicableLabel = 'Not applicable'
+        $minLabel = 'min.'; $maxLabel = 'max.'; $noneLabel = '-'
+    } else {
+        $platformLabels = @{
+            iosRestriction                = 'iOS/iPadOS'
+            androidRestriction            = 'Android (rejestracja standardowa)'
+            androidForWorkRestriction     = 'Android Enterprise (profil służbowy)'
+            androidDeviceOwnerRestriction = 'Android Enterprise (w pełni zarządzane)'
+            windowsRestriction            = 'Windows'
+            windowsMobileRestriction      = 'Windows Mobile'
+            windowsHomeSkuRestriction     = 'Windows Home'
+            macOSRestriction              = 'macOS'
+        }
+        $colZasada = 'Zasada'; $colPlatforma = 'Platforma'; $colRejestracja = 'Rejestracja'
+        $colByod = 'Urządzenia prywatne (BYOD)'; $colOsVer = 'Wymagana wersja systemu'
+        $blockedLabel = 'Zablokowana'; $allowedLabel = 'Dozwolona'; $notApplicableLabel = 'Nie dotyczy'
+        $minLabel = 'min.'; $maxLabel = 'maks.'; $noneLabel = '-'
     }
 
     $rows = foreach ($cfg in ($configs | Sort-Object priority)) {
@@ -34,14 +56,14 @@ function Get-Collector_Intune_PlatformEnrollmentRestrictions {
             $platform = if ($platformLabels.ContainsKey($prop.Name)) { $platformLabels[$prop.Name] } else { ConvertTo-M365TRHumanizedName ($prop.Name -replace 'Restriction$', '') }
             $detail = $prop.Value
             $osRange = New-Object System.Collections.Generic.List[string]
-            if ($detail.osMinimumVersion) { $osRange.Add("min. $($detail.osMinimumVersion)") }
-            if ($detail.osMaximumVersion) { $osRange.Add("maks. $($detail.osMaximumVersion)") }
+            if ($detail.osMinimumVersion) { $osRange.Add("$minLabel $($detail.osMinimumVersion)") }
+            if ($detail.osMaximumVersion) { $osRange.Add("$maxLabel $($detail.osMaximumVersion)") }
             [PSCustomObject]@{
-                'Zasada'              = $cfg.displayName
-                'Platforma'           = $platform
-                'Rejestracja'         = if ($detail.platformBlocked) { 'Zablokowana' } else { 'Dozwolona' }
-                'Urządzenia prywatne (BYOD)' = if ($null -eq $detail.personalDeviceEnrollmentBlocked) { 'Nie dotyczy' } elseif ($detail.personalDeviceEnrollmentBlocked) { 'Zablokowane' } else { 'Dozwolone' }
-                'Wymagana wersja systemu' = if ($osRange.Count -gt 0) { $osRange -join ', ' } else { '-' }
+                $colZasada  = $cfg.displayName
+                $colPlatforma = $platform
+                $colRejestracja = if ($detail.platformBlocked) { $blockedLabel } else { $allowedLabel }
+                $colByod    = if ($null -eq $detail.personalDeviceEnrollmentBlocked) { $notApplicableLabel } elseif ($detail.personalDeviceEnrollmentBlocked) { $blockedLabel } else { $allowedLabel }
+                $colOsVer   = if ($osRange.Count -gt 0) { $osRange -join ', ' } else { $noneLabel }
             }
         }
     }

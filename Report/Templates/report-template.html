@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pl">
+<html lang="{{HTML_LANG}}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,7 +15,7 @@
   <header class="cover">
     <div class="cover-mark">
       {{COVER_MARK}}
-      <span>Dokumentacja techniczna</span>
+      <span>{{TECH_DOC_LABEL}}</span>
     </div>
 
     <div class="cover-eyebrow">{{COVER_EYEBROW}}</div>
@@ -30,12 +30,12 @@
   </header>
 
   <section class="dashboard">
-    <h2>Podsumowanie</h2>
+    <h2>{{SUMMARY_TITLE}}</h2>
 {{DASHBOARD}}
   </section>
 
   <nav class="toc-wrap">
-    <h2>Spis treści</h2>
+    <h2>{{TOC_TITLE}}</h2>
 {{TOC}}
   </nav>
 

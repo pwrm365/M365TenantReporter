@@ -6,6 +6,7 @@ function Get-Collector_Exchange_SafeLinksPolicies {
     tenant jej nie posiada, sekcja pojawi się jako pominieta/pusta, a nie błąd.
     #>
     param([Parameter(Mandatory)]$Context)
+    $lang = Get-M365TRLanguage -Context $Context
     $r = Invoke-M365TREXOCommand -ScriptBlock { Get-SafeLinksPolicy }
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'Exchange' -Section 'Zasady Safe Links (Defender for Office 365)' -Status $r.Status -Message $r.Message
@@ -16,15 +17,27 @@ function Get-Collector_Exchange_SafeLinksPolicies {
     }
     $flat = $r.Data | ForEach-Object {
         $parts = New-Object System.Collections.Generic.List[string]
-        if ($_.EnableSafeLinksForEmail -eq $true) { $parts.Add('skanowanie linków w poczcie') }
-        if ($_.EnableSafeLinksForTeams -eq $true) { $parts.Add('skanowanie linków w Teams') }
-        if ($_.EnableSafeLinksForOffice -eq $true) { $parts.Add('skanowanie linków w plikach Office') }
-        if ($_.ScanUrls -eq $true) { $parts.Add('skanowanie adresów URL w czasie kliknięcia') }
-        if ($_.EnableForInternalSenders -eq $true) { $parts.Add('dotyczy też nadawców wewnętrznych') }
-        if ($_.DeliverMessageAfterScan -eq $true) { $parts.Add('dostarczenie wiadomości dopiero po zakończeniu skanowania') }
-        if ($_.DoNotRewriteUrls -and @($_.DoNotRewriteUrls).Count -gt 0) { $parts.Add("adresy wyłączone z przepisywania: $(@($_.DoNotRewriteUrls).Count)") }
-        if ($_.AllowClickThrough -eq $true) { $parts.Add('użytkownik może kontynuować mimo ostrzeżenia') }
-        $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(domyślne ustawienia, bez dodatkowych włączonych funkcji)' }
+        if ($lang -eq 'en') {
+            if ($_.EnableSafeLinksForEmail -eq $true) { $parts.Add('scans links in email') }
+            if ($_.EnableSafeLinksForTeams -eq $true) { $parts.Add('scans links in Teams') }
+            if ($_.EnableSafeLinksForOffice -eq $true) { $parts.Add('scans links in Office files') }
+            if ($_.ScanUrls -eq $true) { $parts.Add('scans URLs at time of click') }
+            if ($_.EnableForInternalSenders -eq $true) { $parts.Add('also applies to internal senders') }
+            if ($_.DeliverMessageAfterScan -eq $true) { $parts.Add('delivers the message only after scanning completes') }
+            if ($_.DoNotRewriteUrls -and @($_.DoNotRewriteUrls).Count -gt 0) { $parts.Add("URLs excluded from rewriting: $(@($_.DoNotRewriteUrls).Count)") }
+            if ($_.AllowClickThrough -eq $true) { $parts.Add('user can proceed despite the warning') }
+            $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(default settings, no additional features enabled)' }
+        } else {
+            if ($_.EnableSafeLinksForEmail -eq $true) { $parts.Add('skanowanie linków w poczcie') }
+            if ($_.EnableSafeLinksForTeams -eq $true) { $parts.Add('skanowanie linków w Teams') }
+            if ($_.EnableSafeLinksForOffice -eq $true) { $parts.Add('skanowanie linków w plikach Office') }
+            if ($_.ScanUrls -eq $true) { $parts.Add('skanowanie adresów URL w czasie kliknięcia') }
+            if ($_.EnableForInternalSenders -eq $true) { $parts.Add('dotyczy też nadawców wewnętrznych') }
+            if ($_.DeliverMessageAfterScan -eq $true) { $parts.Add('dostarczenie wiadomości dopiero po zakończeniu skanowania') }
+            if ($_.DoNotRewriteUrls -and @($_.DoNotRewriteUrls).Count -gt 0) { $parts.Add("adresy wyłączone z przepisywania: $(@($_.DoNotRewriteUrls).Count)") }
+            if ($_.AllowClickThrough -eq $true) { $parts.Add('użytkownik może kontynuować mimo ostrzeżenia') }
+            $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(domyślne ustawienia, bez dodatkowych włączonych funkcji)' }
+        }
 
         [PSCustomObject]@{
             'Nazwa'      = $_.Name

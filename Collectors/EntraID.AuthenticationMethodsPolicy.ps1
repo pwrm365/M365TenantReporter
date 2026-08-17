@@ -1,5 +1,6 @@
 function Get-Collector_EntraID_AuthenticationMethodsPolicy {
     param([Parameter(Mandatory)]$Context)
+    $lang = Get-M365TRLanguage -Context $Context
     $r = Invoke-M365TRGraphRequest -Context $Context -Path '/policies/authenticationMethodsPolicy'
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'EntraID' -Section 'Polityka metod uwierzytelniania' -Status $r.Status -Message $r.Message
@@ -34,8 +35,14 @@ function Get-Collector_EntraID_AuthenticationMethodsPolicy {
     }
     $rows = @($rows)
 
-    $modified = if ($pol.lastModifiedDateTime) { ([datetime]$pol.lastModifiedDateTime).ToString('dd.MM.yyyy HH:mm') } else { 'nieznana' }
+    $desc = if ($lang -eq 'en') {
+        $modified = if ($pol.lastModifiedDateTime) { ([datetime]$pol.lastModifiedDateTime).ToString('MM/dd/yyyy HH:mm') } else { 'unknown' }
+        "Sign-in methods allowed in the tenant and their state. Policy last modified: $modified."
+    } else {
+        $modified = if ($pol.lastModifiedDateTime) { ([datetime]$pol.lastModifiedDateTime).ToString('dd.MM.yyyy HH:mm') } else { 'nieznana' }
+        "Metody logowania dopuszczone w tenancie oraz ich stan. Ostatnia modyfikacja polityki: $modified."
+    }
     New-M365TRCollectorResult -Component 'EntraID' -Section 'Polityka metod uwierzytelniania' `
-        -Description "Metody logowania dopuszczone w tenancie oraz ich stan. Ostatnia modyfikacja polityki: $modified." `
+        -Description $desc `
         -Status 'ok' -Data $rows
 }

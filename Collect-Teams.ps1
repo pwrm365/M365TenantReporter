@@ -11,17 +11,19 @@ so each gets a fully separate process. Writes each collector result as its own J
 param(
     [string]$ModuleRoot = $PSScriptRoot,
     [Parameter(Mandatory)][string]$OutputJsonPath,
-    [string]$TenantId
+    [string]$TenantId,
+    [ValidateSet('pl', 'en')][string]$Language = 'pl'
 )
 
 Import-Module (Join-Path $ModuleRoot 'M365TenantReporter.psd1') -Force
 
-# New-M365TRCollectorResult/Invoke-M365TREXOCommand są prywatnymi funkcjami modułu,
-# niewidocznymi z tego skryptu przez Import-Module - dot-source'ujemy je bezpośrednio tutaj,
-# żeby kolektory (też dot-sourcowane w tym samym, płaskim scope) widziały je zwykłym
-# mechanizmem PowerShella.
+# Prywatne funkcje modułu, niewidoczne z tego skryptu przez Import-Module - dot-source'ujemy je
+# bezpośrednio tutaj, żeby kolektory (też dot-sourcowane w tym samym, płaskim scope) widziały je
+# zwykłym mechanizmem PowerShella. Get-M365TRLanguage jest potrzebna kolektorom Teams do
+# budowania dwujęzycznych podsumowan ("Co robi").
 . (Join-Path $ModuleRoot 'Private\New-M365TRCollectorResult.ps1')
 . (Join-Path $ModuleRoot 'Private\Invoke-M365TREXOCommand.ps1')
+. (Join-Path $ModuleRoot 'Private\Get-M365TRLanguage.ps1')
 
 if (Test-Path -LiteralPath $OutputJsonPath) { Remove-Item -LiteralPath $OutputJsonPath -Force }
 New-Item -ItemType File -Path $OutputJsonPath -Force | Out-Null
@@ -43,7 +45,7 @@ try {
         try {
             . $file.FullName
             $fn = Get-Command $functionName -ErrorAction Stop
-            $result = & $fn -Context ([PSCustomObject]@{})
+            $result = & $fn -Context ([PSCustomObject]@{ Language = $Language })
             if (-not $result) {
                 $result = New-M365TRCollectorResult -Component $component -Section $section -Status 'error' -Message 'Kolektor nie zwrócił żadnego wyniku.'
             }

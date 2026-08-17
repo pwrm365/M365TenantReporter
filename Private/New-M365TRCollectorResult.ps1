@@ -13,7 +13,8 @@ function New-M365TRCollectorResult {
         [string]$Status = 'ok',
         [string]$Message = $null,
         [object[]]$Data = @(),
-        [switch]$Transpose
+        [switch]$Transpose,
+        [switch]$Records
     )
 
     [PSCustomObject]@{
@@ -24,5 +25,6 @@ function New-M365TRCollectorResult {
         Message     = $Message
         Data        = @($Data)
         Transpose   = [bool]$Transpose
+        Records     = [bool]$Records
     }
 }

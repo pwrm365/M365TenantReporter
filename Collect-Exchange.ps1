@@ -20,16 +20,19 @@ freshest, avoids whatever this is instead of chasing it further.
 param(
     [string]$ModuleRoot = $PSScriptRoot,
     [Parameter(Mandatory)][string]$OutputJsonPath,
-    [string]$TenantId
+    [string]$TenantId,
+    [ValidateSet('pl', 'en')][string]$Language = 'pl'
 )
 
 Import-Module (Join-Path $ModuleRoot 'M365TenantReporter.psd1') -Force
 
-# New-M365TRCollectorResult/Invoke-M365TREXOCommand są prywatne funkcje modułu, niewidoczne z
-# tego skryptu przez Import-Module - dot-source'ujemy je bezpośrednio tutaj, żeby kolektory
-# (tez dot-sourcowane w tym samym, plaskim scope) widzialy je zwyklym mechanizmem PowerShella.
+# Prywatne funkcje modułu, niewidoczne z tego skryptu przez Import-Module - dot-source'ujemy je
+# bezpośrednio tutaj, żeby kolektory (tez dot-sourcowane w tym samym, plaskim scope) widzialy je
+# zwyklym mechanizmem PowerShella. Get-M365TRLanguage jest potrzebna kolektorom Exchange/Purview
+# do budowania dwujęzycznych podsumowan ("Co robi").
 . (Join-Path $ModuleRoot 'Private\New-M365TRCollectorResult.ps1')
 . (Join-Path $ModuleRoot 'Private\Invoke-M365TREXOCommand.ps1')
+. (Join-Path $ModuleRoot 'Private\Get-M365TRLanguage.ps1')
 
 if (Test-Path -LiteralPath $OutputJsonPath) { Remove-Item -LiteralPath $OutputJsonPath -Force }
 New-Item -ItemType File -Path $OutputJsonPath -Force | Out-Null
@@ -51,7 +54,7 @@ try {
         try {
             . $file.FullName
             $fn = Get-Command $functionName -ErrorAction Stop
-            $result = & $fn -Context ([PSCustomObject]@{})
+            $result = & $fn -Context ([PSCustomObject]@{ Language = $Language })
             if (-not $result) {
                 $result = New-M365TRCollectorResult -Component $component -Section $section -Status 'error' -Message 'Kolektor nie zwrocil zadnego wyniku.'
             }

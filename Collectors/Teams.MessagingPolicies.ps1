@@ -5,6 +5,7 @@ function Get-Collector_Teams_MessagingPolicies {
     linków, tłumaczenie) - najważniejsze ustawienia z każdej zasady.
     #>
     param([Parameter(Mandatory)]$Context)
+    $lang = Get-M365TRLanguage -Context $Context
     $r = Invoke-M365TREXOCommand -ScriptBlock { Get-CsTeamsMessagingPolicy }
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'Teams' -Section 'Zasady wiadomości' -Status $r.Status -Message $r.Message
@@ -16,17 +17,31 @@ function Get-Collector_Teams_MessagingPolicies {
 
     $flat = $r.Data | ForEach-Object {
         $parts = New-Object System.Collections.Generic.List[string]
-        if ($_.AllowUserChat -eq $false) { $parts.Add('czat użytkownika zablokowany') }
-        if ($_.AllowUserEditMessage -eq $false) { $parts.Add('edycja wysłanych wiadomości zablokowana') }
-        if ($_.AllowUserDeleteMessage -eq $false) { $parts.Add('usuwanie wysłanych wiadomości zablokowane') }
-        if ($_.AllowOwnerDeleteMessage -eq $false) { $parts.Add('usuwanie wiadomości przez właściciela zespołu zablokowane') }
-        if ($_.AllowGiphy -eq $false) { $parts.Add('GIF-y (Giphy) zablokowane') }
-        if ($_.AllowMemes -eq $false) { $parts.Add('memy zablokowane') }
-        if ($_.AllowStickers -eq $false) { $parts.Add('naklejki zablokowane') }
-        if ($_.AllowUrlPreviews -eq $false) { $parts.Add('podglądy linków zablokowane') }
-        if ($_.AllowUserTranslation -eq $false) { $parts.Add('tłumaczenie wiadomości zablokowane') }
-        if ($_.ReadReceiptsEnabledType) { $parts.Add("potwierdzenia odczytu: $($_.ReadReceiptsEnabledType)") }
-        $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(domyślne ustawienia, wszystko dozwolone)' }
+        if ($lang -eq 'en') {
+            if ($_.AllowUserChat -eq $false) { $parts.Add('user chat blocked') }
+            if ($_.AllowUserEditMessage -eq $false) { $parts.Add('editing sent messages blocked') }
+            if ($_.AllowUserDeleteMessage -eq $false) { $parts.Add('deleting sent messages blocked') }
+            if ($_.AllowOwnerDeleteMessage -eq $false) { $parts.Add('team owner deleting messages blocked') }
+            if ($_.AllowGiphy -eq $false) { $parts.Add('GIFs (Giphy) blocked') }
+            if ($_.AllowMemes -eq $false) { $parts.Add('memes blocked') }
+            if ($_.AllowStickers -eq $false) { $parts.Add('stickers blocked') }
+            if ($_.AllowUrlPreviews -eq $false) { $parts.Add('link previews blocked') }
+            if ($_.AllowUserTranslation -eq $false) { $parts.Add('message translation blocked') }
+            if ($_.ReadReceiptsEnabledType) { $parts.Add("read receipts: $($_.ReadReceiptsEnabledType)") }
+            $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(default settings, everything allowed)' }
+        } else {
+            if ($_.AllowUserChat -eq $false) { $parts.Add('czat użytkownika zablokowany') }
+            if ($_.AllowUserEditMessage -eq $false) { $parts.Add('edycja wysłanych wiadomości zablokowana') }
+            if ($_.AllowUserDeleteMessage -eq $false) { $parts.Add('usuwanie wysłanych wiadomości zablokowane') }
+            if ($_.AllowOwnerDeleteMessage -eq $false) { $parts.Add('usuwanie wiadomości przez właściciela zespołu zablokowane') }
+            if ($_.AllowGiphy -eq $false) { $parts.Add('GIF-y (Giphy) zablokowane') }
+            if ($_.AllowMemes -eq $false) { $parts.Add('memy zablokowane') }
+            if ($_.AllowStickers -eq $false) { $parts.Add('naklejki zablokowane') }
+            if ($_.AllowUrlPreviews -eq $false) { $parts.Add('podglądy linków zablokowane') }
+            if ($_.AllowUserTranslation -eq $false) { $parts.Add('tłumaczenie wiadomości zablokowane') }
+            if ($_.ReadReceiptsEnabledType) { $parts.Add("potwierdzenia odczytu: $($_.ReadReceiptsEnabledType)") }
+            $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(domyślne ustawienia, wszystko dozwolone)' }
+        }
 
         [PSCustomObject]@{
             'Nazwa'   = $_.Identity

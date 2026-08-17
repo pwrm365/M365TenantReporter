@@ -1,5 +1,6 @@
 function Get-Collector_Intune_EnrollmentConfigurations {
     param([Parameter(Mandatory)]$Context)
+    $lang = Get-M365TRLanguage -Context $Context
     $r = Invoke-M365TRGraphRequest -Context $Context -Path '/deviceManagement/deviceEnrollmentConfigurations'
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'Intune' -Section 'Konfiguracje rejestracji urządzeń' -Status $r.Status -Message $r.Message
@@ -13,7 +14,7 @@ function Get-Collector_Intune_EnrollmentConfigurations {
             'Nazwa'     = $_.displayName
             'Typ'       = ConvertTo-M365TRFriendlyConfigTypeName ($_.'@odata.type' -replace '#microsoft.graph\.', '')
             'Priorytet' = $_.priority
-            'Co robi'   = Get-M365TRGenericSettingsSummary -InputObject $_ -ExcludeProperties @('id', '@odata.type', 'displayName', 'description', 'createdDateTime', 'lastModifiedDateTime', 'version', 'roleScopeTagIds', 'priority')
+            'Co robi'   = Get-M365TRGenericSettingsSummary -InputObject $_ -Language $lang -ExcludeProperties @('id', '@odata.type', 'displayName', 'description', 'createdDateTime', 'lastModifiedDateTime', 'version', 'roleScopeTagIds', 'priority')
         }
     }
     New-M365TRCollectorResult -Component 'Intune' -Section 'Konfiguracje rejestracji urządzeń' `
