@@ -152,7 +152,7 @@ function New-M365TRHtmlReport {
         $showGroupHeaders = $chapter.Groups.Count -gt 1
         $groupBlocks = foreach ($group in $chapter.Groups) {
             $sectionBlocks = foreach ($section in $group.Sections) { Get-SectionBlockHtml -Component $chapter.Component -Section $section }
-            $groupHeaderHtml = if ($showGroupHeaders -and $group.Name) { "<h4 class='section-group-title'>$(ConvertTo-M365TRHtmlEncoded $group.Name)</h4>" } else { '' }
+            $groupHeaderHtml = if ($showGroupHeaders -and $group.Name) { "<h4 class='section-group-title'>$(ConvertTo-M365TRHtmlEncoded (Get-Loc $group.Name))</h4>" } else { '' }
             "<div class='section-group'>$groupHeaderHtml$($sectionBlocks -join "`n")</div>"
         }
 
@@ -165,7 +165,7 @@ function New-M365TRHtmlReport {
                     $sid = "$(ConvertTo-SafeId $chapter.Component)_$(ConvertTo-SafeId $section.Section)"
                     "<li><a href='#$sid'>$(ConvertTo-M365TRHtmlEncoded (Get-Loc $section.Section))</a></li>"
                 }
-                $groupLabel = if ($group.Name) { "<span class='chapter-toc-group'>$(ConvertTo-M365TRHtmlEncoded $group.Name)</span>" } else { '' }
+                $groupLabel = if ($group.Name) { "<span class='chapter-toc-group'>$(ConvertTo-M365TRHtmlEncoded (Get-Loc $group.Name))</span>" } else { '' }
                 "<li>$groupLabel<ul>$($links -join "`n")</ul></li>"
             }
             $miniToc = "<nav class='chapter-toc'><ul>$($miniTocGroups -join "`n")</ul></nav>"
