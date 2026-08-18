@@ -40,8 +40,8 @@ function New-M365TRHtmlReport {
         if (-not $col) { return $null }
         $groups = $Section.Data | Group-Object -Property $col | Where-Object { $_.Name } | Sort-Object Count -Descending
         if ($groups.Count -lt 2 -or $groups.Count -gt 12) { return $null }
-        $items = $groups | ForEach-Object { [PSCustomObject]@{ Label = $_.Name; Value = $_.Count } }
-        New-SvgBarChart -Items $items -Title "$($ui.BreakdownPrefix): $(Get-Loc $col)"
+        $items = $groups | ForEach-Object { [PSCustomObject]@{ Label = (Get-Loc $_.Name); Value = $_.Count } }
+        New-SvgBarChart -Items $items -Title "$($ui.BreakdownPrefix): $(Get-Loc $col)" -Language $lang
     }
 
     $statusLabel = @{
@@ -79,7 +79,7 @@ function New-M365TRHtmlReport {
     }
 
     $healthItems = $Model.Health.GetEnumerator() | Where-Object { $_.Value -gt 0 } |
-        ForEach-Object { [PSCustomObject]@{ Label = $_.Key; Value = $_.Value } }
+        ForEach-Object { [PSCustomObject]@{ Label = $_.Key; DisplayLabel = $statusLabel[$_.Key]; Value = $_.Value } }
     $healthDonut = if ($healthItems.Count -gt 1) { New-SvgDonutChart -Items $healthItems -Title $ui.DonutTitle -UseStatusPalette } else { '' }
     $dashboardHtml = "<div class='tiles'>$($tiles -join "`n")</div>`n$healthDonut"
 

@@ -10,7 +10,8 @@ function New-SvgBarChart {
     param(
         [Parameter(Mandatory)][object[]]$Items,
         [string]$Title = $null,
-        [int]$Width = 640
+        [int]$Width = 640,
+        [ValidateSet('pl', 'en')][string]$Language = 'pl'
     )
     $palette = Get-M365TRPalette
     $ink = $palette.Ink
@@ -21,7 +22,8 @@ function New-SvgBarChart {
         $head = $data[0..($maxItems - 2)]
         $restItems = $data[($maxItems - 1)..($data.Count - 1)]
         $restSum = ($restItems | Measure-Object -Property Value -Sum).Sum
-        $data = @($head) + [PSCustomObject]@{ Label = "Inne ($($restItems.Count))"; Value = $restSum }
+        $otherLabel = if ($Language -eq 'en') { 'Other' } else { 'Inne' }
+        $data = @($head) + [PSCustomObject]@{ Label = "$otherLabel ($($restItems.Count))"; Value = $restSum }
     }
     if ($data.Count -eq 0) { return '' }
 

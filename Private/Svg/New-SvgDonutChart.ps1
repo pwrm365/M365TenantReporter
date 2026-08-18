@@ -41,7 +41,8 @@ function New-SvgDonutChart {
         $segments.Add("<circle cx='$cx' cy='$cy' r='$r' fill='none' stroke='$color' stroke-width='$strokeWidth' stroke-dasharray='$dashAdj $remainder' stroke-dashoffset='-$offset' transform='rotate(-90 $cx $cy)' />")
         $offset += $dash
         $pct = [Math]::Round($fraction * 100)
-        $legendLabel = ConvertTo-M365TRHtmlEncoded ([string]$item.Label)
+        $displayLabel = if ($item.DisplayLabel) { $item.DisplayLabel } else { $item.Label }
+        $legendLabel = ConvertTo-M365TRHtmlEncoded ([string]$displayLabel)
         $legend.Add("<div class='legend-item'><span class='legend-swatch' style='background:$color'></span>$legendLabel &mdash; $($item.Value) ($pct%)</div>")
         $i++
     }
