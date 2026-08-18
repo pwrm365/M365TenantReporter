@@ -1,3 +1,29 @@
+function Get-M365TRTeamsExternalAccessPolicyLabelMap {
+    param([ValidateSet('pl', 'en')][string]$Language = 'pl')
+    if ($Language -eq 'en') {
+        return @{
+            EnableFederationAccess       = 'Communication with other organizations allowed'
+            EnableTeamsConsumerAccess    = 'Communication with Teams consumer accounts allowed'
+            EnableTeamsConsumerInbound   = 'Inbound invitations from Teams consumer accounts allowed'
+            EnablePublicCloudAccess      = 'Communication with Skype (public) accounts allowed'
+            EnableAcsFederationAccess    = 'Communication with Azure Communication Services allowed'
+            EnableXFederatedUsersAccess  = 'Communication with users on other Microsoft 365 clouds allowed'
+            EnableFederationAccessSharedSipAddressSpace = 'Access allowed with shared SIP address space'
+            Description                 = 'Admin description'
+        }
+    }
+    return @{
+        EnableFederationAccess       = 'Komunikacja z innymi organizacjami dozwolona'
+        EnableTeamsConsumerAccess    = 'Komunikacja z kontami prywatnymi Teams dozwolona'
+        EnableTeamsConsumerInbound   = 'Przychodzące zaproszenia od kont prywatnych Teams dozwolone'
+        EnablePublicCloudAccess      = 'Komunikacja z kontami Skype (publiczne) dozwolona'
+        EnableAcsFederationAccess    = 'Komunikacja z Azure Communication Services dozwolona'
+        EnableXFederatedUsersAccess  = 'Komunikacja z użytkownikami innych chmur Microsoft 365 dozwolona'
+        EnableFederationAccessSharedSipAddressSpace = 'Dostęp dozwolony przy współdzielonej przestrzeni adresów SIP'
+        Description                 = 'Opis administratora'
+    }
+}
+
 function Get-Collector_Teams_ExternalAccessPolicies {
     <#
     .SYNOPSIS
@@ -7,38 +33,28 @@ function Get-Collector_Teams_ExternalAccessPolicies {
     #>
     param([Parameter(Mandatory)]$Context)
     $lang = Get-M365TRLanguage -Context $Context
+    $description = if ($lang -eq 'en') {
+        'Microsoft Teams external access policies (federation, consumer accounts, Azure Communication Services) per assignment - full settings for each policy.'
+    } else {
+        'Zasady dostępu zewnętrznego Microsoft Teams (federacja, konta prywatne, Azure Communication Services) per przypisanie - pełny zrzut ustawień każdej zasady.'
+    }
     $r = Invoke-M365TREXOCommand -ScriptBlock { Get-CsExternalAccessPolicy }
     if (-not $r.Success) {
         return New-M365TRCollectorResult -Component 'Teams' -Section 'Zasady dostępu zewnętrznego' -Status $r.Status -Message $r.Message
     }
     if ($r.Data.Count -eq 0) {
-        return New-M365TRCollectorResult -Component 'Teams' -Section 'Zasady dostępu zewnętrznego' -Status 'empty' `
-            -Description 'Zasady dostępu zewnętrznego Microsoft Teams (federacja, konta prywatne, Azure Communication Services) per przypisanie.'
+        return New-M365TRCollectorResult -Component 'Teams' -Section 'Zasady dostępu zewnętrznego' -Status 'empty' -Description $description
     }
 
-    $flat = $r.Data | ForEach-Object {
-        $parts = New-Object System.Collections.Generic.List[string]
-        if ($lang -eq 'en') {
-            if ($_.EnableFederationAccess -eq $true) { $parts.Add('communication with other organizations allowed') }
-            if ($_.EnableTeamsConsumerAccess -eq $true) { $parts.Add('communication with Teams consumer accounts allowed') }
-            if ($_.EnableTeamsConsumerInbound -eq $true) { $parts.Add('inbound invitations from Teams consumer accounts allowed') }
-            if ($_.EnablePublicCloudAccess -eq $true) { $parts.Add('communication with Skype (public) accounts allowed') }
-            if ($_.EnableAcsFederationAccess -eq $true) { $parts.Add('communication with Azure Communication Services allowed') }
-            $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(everything blocked)' }
-        } else {
-            if ($_.EnableFederationAccess -eq $true) { $parts.Add('komunikacja z innymi organizacjami dozwolona') }
-            if ($_.EnableTeamsConsumerAccess -eq $true) { $parts.Add('komunikacja z kontami prywatnymi Teams dozwolona') }
-            if ($_.EnableTeamsConsumerInbound -eq $true) { $parts.Add('przychodzące zaproszenia od kont prywatnych Teams dozwolone') }
-            if ($_.EnablePublicCloudAccess -eq $true) { $parts.Add('komunikacja z kontami Skype (publiczne) dozwolona') }
-            if ($_.EnableAcsFederationAccess -eq $true) { $parts.Add('komunikacja z Azure Communication Services dozwolona') }
-            $summary = if ($parts.Count -gt 0) { $parts -join '; ' } else { '(wszystko zablokowane)' }
-        }
+    $labelMap = Get-M365TRTeamsExternalAccessPolicyLabelMap -Language $lang
+    $excludeProps = @('Identity', 'Key', 'RunspaceId', 'PSComputerName', 'PSShowComputerName', 'Element', 'CimClass', 'CimInstanceProperties', 'CimSystemProperties')
 
-        [PSCustomObject]@{
-            'Nazwa'   = $_.Identity
-            'Co robi' = $summary
-        }
+    $records = $r.Data | ForEach-Object {
+        $settingsRows = @(ConvertTo-M365TRLabeledRows -InputObject $_ -LabelMap $labelMap -ExcludeProperties $excludeProps -Language $lang)
+        New-M365TRDetailRecord -Name $_.Identity -Tables @(
+            (New-M365TRDetailTable -Title 'Ustawienia' -Rows $settingsRows)
+        )
     }
     New-M365TRCollectorResult -Component 'Teams' -Section 'Zasady dostępu zewnętrznego' `
-        -Description 'Zasady dostępu zewnętrznego Microsoft Teams (federacja, konta prywatne, Azure Communication Services) per przypisanie.' -Status 'ok' -Data $flat
+        -Description $description -Status 'ok' -Records -Data $records
 }

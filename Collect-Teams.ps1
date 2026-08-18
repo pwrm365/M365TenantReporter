@@ -24,6 +24,9 @@ Import-Module (Join-Path $ModuleRoot 'M365TenantReporter.psd1') -Force
 . (Join-Path $ModuleRoot 'Private\New-M365TRCollectorResult.ps1')
 . (Join-Path $ModuleRoot 'Private\Invoke-M365TREXOCommand.ps1')
 . (Join-Path $ModuleRoot 'Private\Get-M365TRLanguage.ps1')
+. (Join-Path $ModuleRoot 'Private\New-M365TRDetailRecord.ps1')
+. (Join-Path $ModuleRoot 'Private\ConvertTo-M365TRHumanizedName.ps1')
+. (Join-Path $ModuleRoot 'Private\ConvertTo-M365TRLabeledRows.ps1')
 
 if (Test-Path -LiteralPath $OutputJsonPath) { Remove-Item -LiteralPath $OutputJsonPath -Force }
 New-Item -ItemType File -Path $OutputJsonPath -Force | Out-Null

@@ -11,7 +11,8 @@ function ConvertTo-M365TRLabeledRows {
         [Parameter(Mandatory)]$InputObject,
         [hashtable]$LabelMap = @{},
         [hashtable]$ValueLabels = @{},
-        [string[]]$ExcludeProperties = @('@odata.context', '@odata.type', 'id')
+        [string[]]$ExcludeProperties = @('@odata.context', '@odata.type', 'id'),
+        [ValidateSet('pl', 'en')][string]$Language = 'pl'
     )
 
     $props = $InputObject.PSObject.Properties | Where-Object {
@@ -26,7 +27,9 @@ function ConvertTo-M365TRLabeledRows {
             if ($raw[0] -is [PSCustomObject] -or $raw[0] -is [hashtable]) { continue }
             $shown = @($raw | Select-Object -First 15)
             $value = $shown -join ', '
-            if ($raw.Count -gt 15) { $value += " (+$($raw.Count - 15) więcej)" }
+            if ($raw.Count -gt 15) {
+                $value += if ($Language -eq 'en') { " (+$($raw.Count - 15) more)" } else { " (+$($raw.Count - 15) więcej)" }
+            }
         } elseif ($raw -is [PSCustomObject] -or $raw -is [hashtable]) {
             continue
         } else {
@@ -38,7 +41,7 @@ function ConvertTo-M365TRLabeledRows {
             } elseif ($raw -is [string] -and $key -in @('true', 'True', 'false', 'False')) {
                 $value = if ($key -match '^true$') { 'Tak' } else { 'Nie' }
             } elseif ($raw -is [string] -and $raw.Length -gt 300) {
-                $value = "(długi tekst - $($raw.Length) znaków)"
+                $value = if ($Language -eq 'en') { "(long text - $($raw.Length) characters)" } else { "(długi tekst - $($raw.Length) znaków)" }
             } else {
                 $value = $key
             }
