@@ -18,11 +18,19 @@ function Get-Collector_Intune_SettingsCatalog {
     }
 
     $records = foreach ($p in $r.Data) {
+        # templateReference identyfikuje wyspecjalizowane rodziny zasad zbudowane na Settings
+        # Catalog (np. Endpoint Privilege Management, Antivirus, Firewall) - bez tego rodzina
+        # byłaby nierozpoznawalna, bo z zewnątrz wyglądają identycznie jak zwykła zasada Settings
+        # Catalog, tylko z inną etykietą szablonu.
+        $templateFamily = "$($p.templateReference.templateFamily)"
+        $templateName = "$($p.templateReference.templateDisplayName)"
         $basicRows = @(
             [PSCustomObject]@{ Ustawienie = 'Nazwa'; Wartość = $p.name }
             [PSCustomObject]@{ Ustawienie = 'Opis'; Wartość = $p.description }
             [PSCustomObject]@{ Ustawienie = 'Platformy'; Wartość = $p.platforms }
             [PSCustomObject]@{ Ustawienie = 'Technologie'; Wartość = $p.technologies }
+            [PSCustomObject]@{ Ustawienie = 'Rodzina szablonu'; Wartość = if ($templateFamily -and $templateFamily -ne 'none') { $templateFamily } else { $null } }
+            [PSCustomObject]@{ Ustawienie = 'Szablon'; Wartość = $templateName }
             [PSCustomObject]@{ Ustawienie = 'Utworzono'; Wartość = $p.createdDateTime }
             [PSCustomObject]@{ Ustawienie = 'Zmodyfikowano'; Wartość = $p.lastModifiedDateTime }
         ) | Where-Object { $_.Wartość }

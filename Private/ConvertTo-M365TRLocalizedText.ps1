@@ -651,6 +651,26 @@ function Get-M365TRTranslationMap {
         # ---- Entra ID: App Registrations / expiring credentials ----
         'Rejestracje aplikacji (App Registrations)' = 'App Registrations'
         'Uwierzytelnianie' = 'Authentication'
+
+        # ---- Intune: Settings Catalog template family, Role RBAC detail ----
+        'Rodzina szablonu' = 'Template family'
+        'Szablon' = 'Template'
+        'Uprawnienia' = 'Permissions'
+        'Dozwolone akcje' = 'Allowed actions'
+        'Przypisanie' = 'Assignment'
+        'Członkowie (ID)' = 'Members (ID)'
+        'Definicje rol RBAC uzywanych do kontroli dostępu w Intune - pełna lista dozwolonych akcji oraz przypisania (kto ma daną rolę).' = 'RBAC role definitions used to control access in Intune - the full list of allowed actions and assignments (who holds each role).'
+
+        # ---- Teams: app governance ----
+        'Zasady uprawnień aplikacji' = 'App permission policies'
+        'Zasady konfiguracji aplikacji' = 'App setup policies'
+
+        # ---- Purview: Insider Risk / eDiscovery / audit log retention ----
+        'Zasady zarządzania ryzykiem wewnętrznym (Insider Risk)' = 'Insider Risk Management policies'
+        'Sprawy zgodności i eDiscovery' = 'Compliance and eDiscovery cases'
+        'Zasady przechowywania rejestru audytu' = 'Audit log retention policies'
+        'Okres przechowywania (dni)' = 'Retention period (days)'
+        'Obszar roboczy' = 'Workload'
     }
     return $script:M365TRTranslationMap
 }
