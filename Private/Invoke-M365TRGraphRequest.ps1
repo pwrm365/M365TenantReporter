@@ -64,7 +64,7 @@ function Invoke-M365TRGraphRequest {
         }
 
         if ($lastError) {
-            $classified = Resolve-M365TRGraphError -ErrorRecord $lastError
+            $classified = Resolve-M365TRGraphError -ErrorRecord $lastError -Language (Get-M365TRLanguage -Context $Context)
             return [PSCustomObject]@{
                 Success    = $false
                 StatusCode = $classified.StatusCode

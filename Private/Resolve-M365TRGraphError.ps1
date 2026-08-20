@@ -6,7 +6,8 @@ function Resolve-M365TRGraphError {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)]$ErrorRecord
+        [Parameter(Mandatory)]$ErrorRecord,
+        [ValidateSet('pl', 'en')][string]$Language = 'pl'
     )
 
     $statusCode = $null
@@ -38,14 +39,26 @@ function Resolve-M365TRGraphError {
         default { 'error' }
     }
 
-    $friendly = switch ($status) {
-        'skipped-permission' { "Brak zgody/uprawnienia w Microsoft Graph (kod: $errorCode)." }
-        'skipped-license'    { "Tenant nie posiada wymaganej licencji (Entra ID P2 / Governance)." }
-        'empty'              {
-            if ($isUnknownSegment) { "Endpoint niedostępny dla tego tokenu/wersji API w tym tenancie ($errorMessage)." }
-            else { "Zasob nie istnieje w tym tenancie." }
+    $friendly = if ($Language -eq 'en') {
+        switch ($status) {
+            'skipped-permission' { "Missing consent/permission in Microsoft Graph (code: $errorCode)." }
+            'skipped-license'    { "The tenant does not have the required license (Entra ID P2 / Governance)." }
+            'empty'              {
+                if ($isUnknownSegment) { "Endpoint not available for this token/API version in this tenant ($errorMessage)." }
+                else { "The resource does not exist in this tenant." }
+            }
+            default              { "Graph API error ($statusCode $errorCode): $errorMessage" }
         }
-        default              { "Błąd Graph API ($statusCode $errorCode): $errorMessage" }
+    } else {
+        switch ($status) {
+            'skipped-permission' { "Brak zgody/uprawnienia w Microsoft Graph (kod: $errorCode)." }
+            'skipped-license'    { "Tenant nie posiada wymaganej licencji (Entra ID P2 / Governance)." }
+            'empty'              {
+                if ($isUnknownSegment) { "Endpoint niedostępny dla tego tokenu/wersji API w tym tenancie ($errorMessage)." }
+                else { "Zasob nie istnieje w tym tenancie." }
+            }
+            default              { "Błąd Graph API ($statusCode $errorCode): $errorMessage" }
+        }
     }
 
     [PSCustomObject]@{
