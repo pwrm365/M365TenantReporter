@@ -647,6 +647,10 @@ function Get-M365TRTranslationMap {
 
         # ---- SharePoint: site inventory ----
         'Inwentarz witryn' = 'Site inventory'
+
+        # ---- Entra ID: App Registrations / expiring credentials ----
+        'Rejestracje aplikacji (App Registrations)' = 'App Registrations'
+        'Uwierzytelnianie' = 'Authentication'
     }
     return $script:M365TRTranslationMap
 }
