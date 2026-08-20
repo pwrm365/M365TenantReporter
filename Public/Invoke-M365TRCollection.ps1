@@ -22,17 +22,31 @@ function Invoke-M365TRCollection {
         $i++
         Write-Host ("[{0}/{1}] {2} / {3}" -f $i, $collectors.Count, $c.Component, $c.Section) -NoNewline
 
-        try {
-            . $c.Path
-            $fn = Get-Command $c.FunctionName -ErrorAction Stop
-            $result = & $fn -Context $Context
-            if (-not $result) {
-                $result = New-M365TRCollectorResult -Component $c.Component -Section $c.Section `
-                    -Status 'error' -Message 'Kolektor nie zwrocil zadnego wyniku.'
+        # Do 2 proby: obserwowana w tym srodowisku niewyjasniona, nie-deterministyczna
+        # niestabilnosc (patrz komentarz w Collect-Exchange.ps1) sporadycznie objawia sie jako
+        # "Argument types do not match" przy identycznym kodzie i danych - ten sam kolektor
+        # czasem przechodzi, czasem nie. Retry jest tania, uczciwa odpowiedz na cos co jest
+        # potwierdzone jako sporadyczne, a nie deterministyczny blad logiki.
+        $lastError = $null
+        $result = $null
+        for ($attempt = 1; $attempt -le 2; $attempt++) {
+            try {
+                . $c.Path
+                $fn = Get-Command $c.FunctionName -ErrorAction Stop
+                $result = & $fn -Context $Context
+                if (-not $result) {
+                    $result = New-M365TRCollectorResult -Component $c.Component -Section $c.Section `
+                        -Status 'error' -Message 'Kolektor nie zwrocil zadnego wyniku.'
+                }
+                $lastError = $null
+                break
+            } catch {
+                $lastError = $_
             }
-        } catch {
+        }
+        if ($lastError) {
             $result = New-M365TRCollectorResult -Component $c.Component -Section $c.Section `
-                -Status 'error' -Message "Nieoczekiwany błąd kolektora: $($_.Exception.Message)"
+                -Status 'error' -Message "Nieoczekiwany błąd kolektora: $($lastError.Exception.Message)"
         }
 
         $results += $result

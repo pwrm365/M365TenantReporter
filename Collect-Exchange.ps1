@@ -56,15 +56,26 @@ try {
         $component = $parts[0]
         $section = $parts[1]
         $functionName = "Get-Collector_${component}_${section}"
-        try {
-            . $file.FullName
-            $fn = Get-Command $functionName -ErrorAction Stop
-            $result = & $fn -Context ([PSCustomObject]@{ Language = $Language })
-            if (-not $result) {
-                $result = New-M365TRCollectorResult -Component $component -Section $section -Status 'error' -Message 'Kolektor nie zwrocil zadnego wyniku.'
+        # Do 2 proby - patrz komentarz na gorze pliku o niewyjasnionej, nie-deterministycznej
+        # niestabilnosci tego srodowiska ("Argument types do not match" przy identycznym kodzie).
+        $lastError = $null
+        $result = $null
+        for ($attempt = 1; $attempt -le 2; $attempt++) {
+            try {
+                . $file.FullName
+                $fn = Get-Command $functionName -ErrorAction Stop
+                $result = & $fn -Context ([PSCustomObject]@{ Language = $Language })
+                if (-not $result) {
+                    $result = New-M365TRCollectorResult -Component $component -Section $section -Status 'error' -Message 'Kolektor nie zwrocil zadnego wyniku.'
+                }
+                $lastError = $null
+                break
+            } catch {
+                $lastError = $_
             }
-        } catch {
-            $result = New-M365TRCollectorResult -Component $component -Section $section -Status 'error' -Message "Nieoczekiwany błąd kolektora: $($_.Exception.Message)"
+        }
+        if ($lastError) {
+            $result = New-M365TRCollectorResult -Component $component -Section $section -Status 'error' -Message "Nieoczekiwany błąd kolektora: $($lastError.Exception.Message)"
         }
 
         try {

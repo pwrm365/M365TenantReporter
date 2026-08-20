@@ -45,6 +45,8 @@ function New-M365TRAppRegistration {
         'PrintConnector.Read.All'
         'DeviceManagementScripts.Read.All'
         'OnPremDirectorySynchronization.Read.All'
+        'AccessReview.Read.All'
+        'Sites.Read.All'
     )
 
     Write-Host "Wyszukiwanie service principal Microsoft Graph..."

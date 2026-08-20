@@ -595,6 +595,58 @@ function Get-M365TRTranslationMap {
         'Zasady wiadomości' = 'Messaging policies'
         'Zasady wiadomości Microsoft Teams (edycja/usuwanie, GIF-y, naklejki, podglądy linków, tłumaczenie).' = 'Microsoft Teams messaging policies (edit/delete, GIFs, stickers, link previews, translation).'
         'Zasady zapobiegania utracie danych (DLP) skonfigurowane w Microsoft Purview.' = 'Data Loss Prevention (DLP) policies configured in Microsoft Purview.'
+
+        # ---- Exchange: Remote Domains / Tenant Allow-Block List / Role Groups (M365DSC gap-analysis round) ----
+        'Zdalne domeny (Remote Domains)' = 'Remote Domains'
+        'Zdalne domeny (Remote Domains) kontrolujące autoprzekazywanie i autoodpowiedzi na zewnątrz organizacji.' = 'Remote Domains controlling auto-forwarding and auto-reply to recipients outside the organization.'
+        'Zdalne domeny (Remote Domains) kontrolujące autoprzekazywanie wiadomości i autoodpowiedzi (Poza biurem) na zewnątrz organizacji.' = 'Remote Domains controlling message auto-forwarding and auto-reply (Out of Office) to recipients outside the organization.'
+        'Nazwa domeny'             = 'Domain name'
+        'Wewnętrzna'               = 'Internal'
+        'Autoprzekazywanie na zewnątrz dozwolone' = 'External auto-forwarding allowed'
+        'Autoodpowiedzi na zewnątrz dozwolone'    = 'External auto-reply allowed'
+        'Powiadomienia o przekierowaniu spotkań'  = 'Meeting forward notifications'
+        'Dozwolony format Poza biurem (OOF)'      = 'Allowed Out-of-Office (OOF) format'
+
+        'Tenant Allow/Block List' = 'Tenant Allow/Block List'
+        'Ręcznie dodane wpisy dozwolone/zablokowane (nadawcy, URL, skróty plików) w Microsoft Defender for Office 365.' = 'Manually added allow/block entries (senders, URLs, file hashes) in Microsoft Defender for Office 365.'
+        'Ręcznie dodane wpisy na tenantowej liście dozwolonych/zablokowanych (nadawcy, adresy URL, skróty plików) w Microsoft Defender for Office 365 - nadpisują standardowe filtrowanie.' = 'Manually added entries on the tenant allow/block list (senders, URLs, file hashes) in Microsoft Defender for Office 365 - override standard filtering.'
+        'Typ listy'  = 'List type'
+        'Wygasa'     = 'Expires'
+        'Uwagi'      = 'Notes'
+        'Nadawca'    = 'Sender'
+        'Adres URL'  = 'URL'
+        'Skrót pliku (hash)' = 'File hash'
+        'Nie wygasa' = 'Never expires'
+
+        'Grupy ról administracyjnych (RBAC)' = 'Administrative role groups (RBAC)'
+        'Grupy ról Exchange (RBAC) posiadające co najmniej jednego członka.' = 'Exchange role groups (RBAC) with at least one member.'
+        'Grupy ról Exchange/Purview (RBAC) posiadające co najmniej jednego członka - kto ma podwyższone uprawnienia administracyjne. Wbudowane grupy ról bez żadnego członka są pominięte.' = 'Exchange/Purview role groups (RBAC) with at least one member - who has elevated administrative access. Built-in role groups with no members are omitted.'
+        'Nazwa grupy roli'  = 'Role group name'
+        'Liczba członków'   = 'Member count'
+
+        # ---- Entra ID: App Consent Governance / Permission Grant Policies / Access Reviews ----
+        'Zgoda na aplikacje (App Consent)' = 'App Consent'
+        'Czy zwykli użytkownicy mogą sami wyrazić zgodę na uprawnienia żądane przez aplikacje, oraz konfiguracja przepływu pracy zgody administratora (Admin Consent Workflow) gdy nie mogą.' = 'Whether regular users can consent to app permission requests themselves, and the configuration of the Admin Consent Workflow for when they cannot.'
+        'Czy zwykli użytkownicy mogą sami wyrazić zgodę na aplikacje' = 'Whether regular users can consent to apps themselves'
+        'Nie - każda zgoda wymaga zatwierdzenia przez administratora' = 'No - every consent requires administrator approval'
+        'Przepływ pracy zgody administratora (Admin Consent Workflow)' = 'Admin Consent Workflow'
+        'Powiadamianie recenzentów o nowych żądaniach' = 'Notify reviewers of new requests'
+        'Przypomnienia o oczekujących żądaniach' = 'Reminders for pending requests'
+        'Ważność żądania (dni)' = 'Request validity (days)'
+        'Liczba wyznaczonych recenzentów' = 'Number of assigned reviewers'
+
+        'Zasady zgody (Permission Grant Policies)' = 'Permission Grant Policies'
+        'Zasady zgody (Permission Grant Policies) definiujące warunki przyznawania zgody aplikacjom.' = 'Permission Grant Policies defining the conditions under which consent can be granted to apps.'
+        'Zasady zgody (Permission Grant Policies) definiujące warunki, na jakich użytkownicy lub administratorzy mogą przyznawać aplikacjom zgodę na uprawnienia.' = 'Permission Grant Policies defining the conditions under which users or administrators can grant apps consent to permissions.'
+        'Identyfikator' = 'Identifier'
+        'Wbudowana (dostarczona przez Microsoft)' = 'Built-in (provided by Microsoft)'
+
+        'Przeglądy dostępu (Access Reviews)' = 'Access Reviews'
+        'Skonfigurowane kampanie okresowego przeglądu dostępu (Access Reviews).' = 'Configured periodic access review campaigns.'
+        'Skonfigurowane kampanie okresowego przeglądu dostępu (Access Reviews) - kto podlega przeglądowi, jak często i kto go przeprowadza.' = 'Configured periodic access review campaigns (Access Reviews) - who is reviewed, how often, and who performs the review.'
+
+        # ---- SharePoint: site inventory ----
+        'Inwentarz witryn' = 'Site inventory'
     }
     return $script:M365TRTranslationMap
 }
