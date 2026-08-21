@@ -114,6 +114,42 @@ function Start-M365TRDocumentation {
         Remove-Item -LiteralPath $teamsJsonPath -ErrorAction SilentlyContinue
     }
 
+    # SharePoint (poziom administracyjny, PnP.PowerShell): osobny proces, ta sama logika co
+    # Exchange/Teams powyzej. To krok OPCJONALNY (patrz Add-M365TRSharePointAdminAccess) - dla
+    # tenantow, które go nie skonfigurowały, Connect-PnPOnline (uwierzytelnianie certyfikatem)
+    # samo w sobie się powodzi, ale każde wywołanie cmdletu zwraca 401 Unauthorized (brak
+    # Sites.FullControl.All) - klasyfikowane jako skipped-permission, nie error (patrz
+    # Invoke-M365TREXOCommand). Sekcje więc się pojawiają, tylko jako pominięte, nie znikają.
+    Write-Host 'Uruchamianie zbierania danych SharePoint (poziom administracyjny, osobny proces)...'
+    $spoJsonPath = Join-Path ([System.IO.Path]::GetTempPath()) "m365tr-spo-$([guid]::NewGuid()).json"
+    try {
+        $spoArgs = @('-NoProfile', '-File', (Join-Path $moduleRoot 'Collect-SharePointAdmin.ps1'), '-ModuleRoot', $moduleRoot, '-OutputJsonPath', $spoJsonPath, '-Language', $Language)
+        if ($context.TenantId) { $spoArgs += @('-TenantId', $context.TenantId) }
+        & pwsh @spoArgs
+        $spoResults = @()
+        if (Test-Path -LiteralPath $spoJsonPath) {
+            $spoLines = Get-Content -LiteralPath $spoJsonPath | Where-Object { $_ -and $_.Trim() }
+            $spoResults = foreach ($line in $spoLines) {
+                try {
+                    $r = $line | ConvertFrom-Json
+                    if ($null -eq $r.Data) { $r.Data = @() }
+                    elseif ($r.Data -isnot [array]) { $r.Data = @($r.Data) }
+                    $r
+                } catch {
+                    Write-Warning "Nie udało się odczytać jednej linii wyniku SharePoint (admin): $($_.Exception.Message)"
+                }
+            }
+        }
+        if (@($spoResults).Count -gt 0) {
+            $results = @($results) + @($spoResults)
+        }
+        # Brak wyniku tutaj (proces nie zdołał się nawet połączyć - np. modul PnP.PowerShell nie
+        # zainstalowany) NIE jest ostrzegane jak przy Exchange/Teams, tylko cicho pomijane - to
+        # krok opcjonalny. Podpowiedz o tym, jak go wlaczyc, jest wyswietlana pod koniec.
+    } finally {
+        Remove-Item -LiteralPath $spoJsonPath -ErrorAction SilentlyContinue
+    }
+
     $orgResult = $results | Where-Object { $_.Component -eq 'EntraID' -and $_.Section -eq 'Organizacja' -and $_.Status -eq 'ok' } | Select-Object -First 1
     $tenantName = if ($orgResult -and $orgResult.Data[0].Nazwa) { $orgResult.Data[0].Nazwa }
                   elseif ($context.TenantDisplayName) { $context.TenantDisplayName }
@@ -144,8 +180,25 @@ function Start-M365TRDocumentation {
     $skippedCompliance = @($results | Where-Object { $_.Component -eq 'Purview' -and $_.Status -eq 'skipped-permission' -and $_.Message -match 'Get-InsiderRiskPolicy|Get-ComplianceCase|Get-UnifiedAuditLogRetentionPolicy' })
     if ($skippedCompliance.Count -gt 0) {
         Write-Host ''
-        Write-Host ("Uwaga: {0} sekcji Purview (Insider Risk / eDiscovery / retencja audytu) zostało pominiętych - to konto ma tylko rolę Global Reader." -f $skippedCompliance.Count)
-        Write-Host 'Aby je odblokować, uruchom ponownie Setup-AppPermissions.ps1 dla tego tenanta i zgódź się na rozszerzenie uprawnień o rolę Compliance Administrator, gdy zapyta.'
+        if ($Language -eq 'en') {
+            Write-Host ("Note: {0} Purview sections (Insider Risk / eDiscovery / audit retention) were skipped - this account only has the Global Reader role." -f $skippedCompliance.Count)
+            Write-Host 'To unlock them, re-run Setup-AppPermissions.ps1 for this tenant and agree to the Compliance Administrator role grant when asked.'
+        } else {
+            Write-Host ("Uwaga: {0} sekcji Purview (Insider Risk / eDiscovery / retencja audytu) zostało pominiętych - to konto ma tylko rolę Global Reader." -f $skippedCompliance.Count)
+            Write-Host 'Aby je odblokować, uruchom ponownie Setup-AppPermissions.ps1 dla tego tenanta i zgódź się na rozszerzenie uprawnień o rolę Compliance Administrator, gdy zapyta.'
+        }
+    }
+    $spoAdminSections = @('Witryna startowa (Home Site)', 'Witryny Hub', 'Ustawienia SharePoint (poziom administracyjny)')
+    $skippedSpoAdmin = @($results | Where-Object { $_.Component -eq 'SharePoint' -and $_.Section -in $spoAdminSections -and $_.Status -in @('skipped-permission', 'error') })
+    if ($skippedSpoAdmin.Count -gt 0) {
+        Write-Host ''
+        if ($Language -eq 'en') {
+            Write-Host ("Note: {0} SharePoint administrative-level sections (home site, hub sites, idle session settings) were skipped - this optional access is not configured for this tenant." -f $skippedSpoAdmin.Count)
+            Write-Host 'To enable it, re-run Setup-AppPermissions.ps1 for this tenant and agree to the SharePoint administrative access grant when asked.'
+        } else {
+            Write-Host ("Uwaga: {0} sekcji SharePoint na poziomie administracyjnym (witryna startowa, witryny Hub, ustawienia bezczynności) zostało pominiętych - ten opcjonalny dostęp nie jest skonfigurowany dla tego tenanta." -f $skippedSpoAdmin.Count)
+            Write-Host 'Aby go włączyć, uruchom ponownie Setup-AppPermissions.ps1 dla tego tenanta i zgódź się na rozszerzenie uprawnień o dostęp administracyjny SharePoint, gdy zapyta.'
+        }
     }
 
     [PSCustomObject]@{

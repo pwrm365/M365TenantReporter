@@ -18,6 +18,7 @@ function Install-M365TRPrerequisites {
         @{ Name = 'MSAL.PS'; RequiredVersion = $null }
         @{ Name = 'ExchangeOnlineManagement'; RequiredVersion = '3.7.2' }
         @{ Name = 'MicrosoftTeams'; RequiredVersion = $null }
+        @{ Name = 'PnP.PowerShell'; RequiredVersion = $null }
     )
 
     $missing = $requiredModules | Where-Object {

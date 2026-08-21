@@ -148,5 +148,41 @@ if ("$complianceChoice".Trim() -match '^[tTyY]') {
     Write-Host 'Pominięto - te trzy sekcje pozostaną oznaczone jako pominięte z powodu uprawnień. Można to zmienić później, uruchamiając ten skrypt ponownie.'
 }
 
+# Kolejny krok OPCJONALNY - domyślnie NIE wykonywany, i wymaga NOWEGO modulu (PnP.PowerShell,
+# instalowanego automatycznie przez Install-M365TRPrerequisites). Bez niego witryna startowa
+# (Home Site), witryny Hub i pełne ustawienia administracyjne SharePoint (np. wylogowanie po
+# bezczynności) są całkowicie niewidoczne w raporcie - nie pojawiają się nawet jako "pominięte",
+# bo logowanie do witryny administracyjnej SharePoint zawodzi zanim którykolwiek kolektor
+# zdąży się uruchomić.
+Write-Host ''
+Write-Host '=================================================================='
+Write-Host 'OPCJONALNE: rozszerzenie uprawnień o dane administracyjne SharePoint'
+Write-Host '=================================================================='
+Write-Host 'Trzy sekcje raportu (witryna startowa Home Site, witryny Hub, pełne ustawienia'
+Write-Host 'administracyjne SharePoint - w tym m.in. wylogowanie po bezczynności) wymagają'
+Write-Host 'zupełnie innego dostępu niż to, co Microsoft Graph udostępnia - nie da się ich'
+Write-Host 'odblokować żadną rolą katalogową, tylko bezpośrednim uprawnieniem do SharePoint.'
+Write-Host ''
+Write-Host 'Wymaga to nadania uprawnienia aplikacji "Sites.FullControl.All" - to jest SZEROKIE'
+Write-Host 'uprawnienie: pełna kontrola nad TREŚCIĄ wszystkich witryn SharePoint w tenancie, nie'
+Write-Host 'tylko nad ustawieniami administracyjnymi. Nie istnieje węższe uprawnienie tej klasy,'
+Write-Host 'które wystarczyłoby do samego odczytu danych administracyjnych - to ograniczenie'
+Write-Host 'modelu uprawnień Microsoft, nie tego narzędzia.'
+Write-Host ''
+Write-Host 'To decyzja świadoma - jeśli nie jesteś pewien, wybierz "nie" (Enter). Można to zawsze'
+Write-Host 'nadać później, uruchamiając ten skrypt ponownie dla tego samego tenanta.'
+$spoChoice = $null
+try { $spoChoice = Read-Host 'Nadać uprawnienie Sites.FullControl.All? (t/N)' } catch { $spoChoice = $null }
+if ("$spoChoice".Trim() -match '^[tTyY]') {
+    $spoResult = Add-M365TRSharePointAdminAccess -Context $adminContext -ServicePrincipalId $result.ServicePrincipalId
+    if (-not $spoResult.Success) {
+        Write-Warning "Rozszerzenie uprawnień SharePoint nie w pełni się powiodło: $($spoResult.Failed -join '; ')"
+    } else {
+        Write-Host 'Uprawnienie Sites.FullControl.All nadane - te trzy sekcje powinny teraz zebrać dane przy kolejnym raporcie (może być potrzebnych do kilkudziesięciu minut na propagację uprawnień w Microsoft 365).'
+    }
+} else {
+    Write-Host 'Pominięto - te trzy sekcje pozostaną całkowicie niewidoczne w raporcie. Można to zmienić później, uruchamiając ten skrypt ponownie.'
+}
+
 Write-Host ''
 Write-Host "Tenant '$($result.OrganizationDisplayName)' gotowy. Start-Report.ps1 zaproponuje go teraz do wyboru przy logowaniu."

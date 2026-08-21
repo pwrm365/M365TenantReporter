@@ -671,6 +671,12 @@ function Get-M365TRTranslationMap {
         'Zasady przechowywania rejestru audytu' = 'Audit log retention policies'
         'Okres przechowywania (dni)' = 'Retention period (days)'
         'Obszar roboczy' = 'Workload'
+
+        # ---- SharePoint: admin-level (PnP.PowerShell) - Home Site / Hub Sites / tenant settings ----
+        'Witryna startowa (Home Site)' = 'Home site'
+        'Witryny Hub' = 'Hub sites'
+        'Ustawienia SharePoint (poziom administracyjny)' = 'SharePoint settings (administrative level)'
+        'Liczba powiązanych witryn' = 'Associated sites count'
     }
     return $script:M365TRTranslationMap
 }

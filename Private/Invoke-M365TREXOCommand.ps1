@@ -19,6 +19,7 @@ function Invoke-M365TREXOCommand {
             '*not have permission*'         { 'skipped-permission'; break }
             '*Insufficient access rights*'  { 'skipped-permission'; break }
             '*not recognized as*cmdlet*'    { 'skipped-permission'; break } # sesja EXO/IPPS niepolaczona - cmdlet niedostępny
+            '*status code is*Unauthorized*' { 'skipped-permission'; break } # PnP.PowerShell: polaczenie (cert) OK, ale brak Sites.FullControl.All
             default                         { 'error' }
         }
         [PSCustomObject]@{ Success = $false; Status = $status; Message = $msg; Data = @() }

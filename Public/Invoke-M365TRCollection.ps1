@@ -14,8 +14,12 @@ function Invoke-M365TRCollection {
     # Exchange/Purview i Teams kolektory są uruchamiane osobno (Collect-Exchange.ps1 /
     # Collect-Teams.ps1, każdy we wlasnym procesie) - ExchangeOnlineManagement i MicrosoftTeams
     # laduja własne, niezgodne wersje zależności, które koliduja z MSAL.PS uzywanym tutaj do
-    # logowania Graph w tym samym procesie.
-    $collectors = Get-M365TRCollectorFiles -ModuleRoot $ModuleRoot | Where-Object { $_.Component -notin @('Exchange', 'Purview', 'Teams') }
+    # logowania Graph w tym samym procesie. Kolektory "SharePoint.Pnp*" (rozpoznawane po
+    # przedrostku "Pnp" w drugim segmencie nazwy pliku, nie po komponencie - mają celowo ten sam
+    # komponent 'SharePoint' co istniejące kolektory Graph, żeby trafić do tego samego rozdziału
+    # raportu) też są osobne (Collect-SharePointAdmin.ps1) z tego samego powodu - PnP.PowerShell.
+    $collectors = Get-M365TRCollectorFiles -ModuleRoot $ModuleRoot |
+        Where-Object { $_.Component -notin @('Exchange', 'Purview', 'Teams') -and $_.Section -notlike 'Pnp*' }
     $results = @()
     $i = 0
     foreach ($c in $collectors) {
