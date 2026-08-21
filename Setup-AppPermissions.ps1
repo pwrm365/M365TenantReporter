@@ -110,5 +110,43 @@ if (-not $teamsResult.Success) {
     Write-Warning "Konfiguracja Microsoft Teams nie w pełni się powiodła: $($teamsResult.Failed -join '; ')"
 }
 
+# Krok OPCJONALNY - domyślnie NIE wykonywany. Global Reader (nadany wyżej) celowo nie
+# obejmuje wszystkich obszarów Purview/Security & Compliance - Microsoft chowa część z nich
+# (sprawy eDiscovery, zarządzanie retencją rejestru audytu, część Insider Risk Management) za
+# dedykowanymi rolami zgodności. Decyzja jest w pełni świadoma - poniżej pełne wyjaśnienie,
+# zanim padnie pytanie, i domyślna odpowiedź to "nie" (Enter = pomiń).
+Write-Host ''
+Write-Host '=================================================================='
+Write-Host 'OPCJONALNE: rozszerzenie uprawnień o dodatkowe dane zgodności (Purview)'
+Write-Host '=================================================================='
+Write-Host 'Ten tenant ma już rolę Global Reader (odczyt praktycznie wszystkiego). Microsoft'
+Write-Host 'celowo NIE obejmuje tą rolą trzech obszarów raportu, które dziś pojawiają się jako'
+Write-Host '"Pominięto - brak uprawnień":'
+Write-Host '  - Zasady zarządzania ryzykiem wewnętrznym (Insider Risk Management)'
+Write-Host '  - Sprawy zgodności i eDiscovery'
+Write-Host '  - Zasady przechowywania rejestru audytu'
+Write-Host ''
+Write-Host 'Można to odblokować, nadając dodatkowo rolę katalogową "Compliance Administrator".'
+Write-Host 'To REALNE rozszerzenie uprawnień tej aplikacji w całym tenancie - Compliance'
+Write-Host 'Administrator ma szeroki dostęp do konfiguracji i danych zgodności/Purview, nie'
+Write-Host 'tylko do trzech sekcji wymienionych wyżej. Zastrzeżenie: sama ta rola może nie'
+Write-Host 'odblokować Insider Risk Management w 100% - część jego funkcji jest kontrolowana'
+Write-Host 'przez odrębną grupę ról w portalu Purview, której to narzędzie nie konfiguruje.'
+Write-Host ''
+Write-Host 'To decyzja świadoma - jeśli nie jesteś pewien, wybierz "nie" (Enter). Można to'
+Write-Host 'zawsze nadać później, uruchamiając ten skrypt ponownie dla tego samego tenanta.'
+$complianceChoice = $null
+try { $complianceChoice = Read-Host 'Nadać rolę Compliance Administrator? (t/N)' } catch { $complianceChoice = $null }
+if ("$complianceChoice".Trim() -match '^[tTyY]') {
+    $complianceResult = Add-M365TRCompliancePermissions -Context $adminContext -ServicePrincipalId $result.ServicePrincipalId
+    if (-not $complianceResult.Success) {
+        Write-Warning "Rozszerzenie uprawnień zgodności nie w pełni się powiodło: $($complianceResult.Failed -join '; ')"
+    } else {
+        Write-Host 'Rola Compliance Administrator nadana - te trzy sekcje powinny teraz zebrać dane przy kolejnym raporcie (może być potrzebnych do kilkudziesięciu minut na propagację uprawnień w Microsoft 365).'
+    }
+} else {
+    Write-Host 'Pominięto - te trzy sekcje pozostaną oznaczone jako pominięte z powodu uprawnień. Można to zmienić później, uruchamiając ten skrypt ponownie.'
+}
+
 Write-Host ''
 Write-Host "Tenant '$($result.OrganizationDisplayName)' gotowy. Start-Report.ps1 zaproponuje go teraz do wyboru przy logowaniu."

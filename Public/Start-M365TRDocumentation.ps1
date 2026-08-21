@@ -138,6 +138,16 @@ function Start-M365TRDocumentation {
         $finalPdfPath = Export-M365TRReportPdf -HtmlPath $htmlPath -PdfPath $pdfPath
     }
 
+    # Podpowiedz konsolowa (nie trafia do raportu) - informuje osobę uruchamiającą, że te
+    # konkretne pominięcia mają dostępne, świadome rozwiązanie (Setup-AppPermissions.ps1), a nie
+    # są tylko kolejnym "brak licencji/uprawnień" do zignorowania.
+    $skippedCompliance = @($results | Where-Object { $_.Component -eq 'Purview' -and $_.Status -eq 'skipped-permission' -and $_.Message -match 'Get-InsiderRiskPolicy|Get-ComplianceCase|Get-UnifiedAuditLogRetentionPolicy' })
+    if ($skippedCompliance.Count -gt 0) {
+        Write-Host ''
+        Write-Host ("Uwaga: {0} sekcji Purview (Insider Risk / eDiscovery / retencja audytu) zostało pominiętych - to konto ma tylko rolę Global Reader." -f $skippedCompliance.Count)
+        Write-Host 'Aby je odblokować, uruchom ponownie Setup-AppPermissions.ps1 dla tego tenanta i zgódź się na rozszerzenie uprawnień o rolę Compliance Administrator, gdy zapyta.'
+    }
+
     [PSCustomObject]@{
         HtmlPath = $htmlPath
         PdfPath  = $finalPdfPath
